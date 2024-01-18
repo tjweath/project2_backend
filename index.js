@@ -56,7 +56,6 @@ app.post('/user/login', async (req, res) => {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User'
         },
-        // completed: Boolean
     })
     
     const User = mongoose.model('User', userSchema)
@@ -98,7 +97,6 @@ app.post('/user/login', async (req, res) => {
                 {
                     activity: req.body.activity,
                     day: req.body.day, 
-                    // completed: req.body.completed 
                 },
                 { new: true }
             );
