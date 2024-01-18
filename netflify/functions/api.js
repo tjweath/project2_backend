@@ -1,18 +1,15 @@
 import 'dotenv/config'
-import express from 'express'
+import express, { Router } from 'express'
 import cors from 'cors'
 import bodyParser from 'body-parser'
 import mongoose from 'mongoose'
+import serverless from 'serverless-http'
 
-const app = express()
-app.use(cors())
-app.use(bodyParser.json())
+const api = express()
+api.use(cors())
+api.use(bodyParser.json())
 
 const port = process.env.PORT || 4000
-
-app.listen(port, () => {
-    console.log(`listening on port: ${port}`);
-})
 
 mongoose.connect(process.env.DATABASE_URL)
 
@@ -29,7 +26,9 @@ const userSchema = new Schema({
     }
 })
 
-app.post('/user/login', async (req, res) => {
+const router = Router()
+
+router.post('/user/login', async (req, res) => {
     const now = new Date() 
     if (await User.countDocuments({ "userEmail": req.body.userEmail }) === 0) {
         const newUser = new User({
@@ -62,7 +61,7 @@ app.post('/user/login', async (req, res) => {
     const User = mongoose.model('User', userSchema)
     const Activity = mongoose.model('Activity', activitySchema)
   
-    app.post('/account/add' , async (req, res) => {
+    router.post('/account/add' , async (req, res) => {
         try { 
             const createActivity = await Activity.create(req.body)
             res.status(200).json(createActivity)
@@ -73,7 +72,7 @@ app.post('/user/login', async (req, res) => {
         }
     })
 
-    app.get('/activity', async (req, res) => {
+    router.get('/activity', async (req, res) => {
         try {
             const allActivity = await Activity.find({}).populate('user')
             res.json(allActivity)
@@ -82,13 +81,13 @@ app.post('/user/login', async (req, res) => {
         }
     })
 
-    app.get('/activity/:id', async (req, res) => {
+    router.get('/activity/:id', async (req, res) => {
         const activity = await Activity.findById(req.params.id).populate('day')
         res.json(activity)
     })
     
     
-      app.put('/activity/:id', async (req, res) => {
+      router.put('/activity/:id', async (req, res) => {
         try {
             console.log('Request Body:', req.body);
             console.log('Request Params ID', req.params.id);
@@ -114,7 +113,7 @@ app.post('/user/login', async (req, res) => {
         }
     });
 
-    app.delete('/activity/:id', (req, res) => {
+    router.delete('/activity/:id', (req, res) => {
         Activity.deleteOne({"_id": req.params.id})
         .then(() => {
             res.sendStatus(200)
@@ -123,5 +122,8 @@ app.post('/user/login', async (req, res) => {
             req.sendStatus(500)
         })
     })
-    
+  
+    api.use("/api/", router)
+
+    export const handler = serverless(api)
     
